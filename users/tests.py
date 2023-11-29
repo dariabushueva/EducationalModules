@@ -67,4 +67,3 @@ class UserTestCase(APITestCase):
     def test_user_str(self):
         user = User.objects.create_user(email='test@test.com', password='test_qwerty')
         self.assertEquals(user.__str__(), 'test@test.com')
-
