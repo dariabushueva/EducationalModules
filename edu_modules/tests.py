@@ -1,69 +1,106 @@
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
+from edu_modules.models import Module
 from users.models import User
 
 
-class UserTestCase(APITestCase):
+class ModuleTestCase(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.data = {
-            "email": "test@test.com",
-            "password": "test_qwerty"
-        }
-        self.update_data = {
-            "first_name": "FirstTest",
-            "last_name": "LastTest"
+        self.user = User.objects.create_user(email='test@test.com', password='test', is_staff=True, is_superuser=True)
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_module(self):
+
+        data = {
+            "title": "test_title",
+            "description": "test_description"
         }
 
-    def test_create_user(self):
-        response = self.client.post('/users/', data=self.data, format='json')
+        response = self.client.post(
+            '/module/',
+            data=data,
+            format='json'
+        )
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED
         )
+        self.assertEqual(
+            response.json(),
+            {'id': 1, 'title': 'test_title', 'description': 'test_description', 'author': 1}
+        )
+        self.assertTrue(
+            Module.objects.all().exists()
+        )
 
-    def test_list_users(self):
-        user = User.objects.create_user(email='test@test.com', password='test_qwerty', is_staff=True, is_superuser=True)
-        self.client.force_authenticate(user=user)
-        response = self.client.get('/users/')
+    def test_list_module(self):
+
+        module = Module.objects.create(title='test_title', description='test_description')
+
+        response = self.client.get(
+            '/module/'
+        )
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK
         )
+        self.assertEqual(
+            response.json()['results'],
+            [{'id': module.id, 'title': 'test_title', 'description': 'test_description', 'author': None}]
+        )
 
-    def test_detail_user(self):
-        user = User.objects.create_user(email='test@test.com', password='test_qwerty')
-        self.client.force_authenticate(user=user)
-        response = self.client.get(f'/users/{user.pk}/')
+    def test_detail_module(self):
+
+        module = Module.objects.create(title='test_title', description='test_description')
+
+        response = self.client.get(
+            f'/module/{module.id}/'
+        )
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK
         )
+        self.assertEqual(
+            response.json(),
+            {'id': module.id, 'title': 'test_title', 'description': 'test_description', 'author': None}
+        )
 
-    def test_update_user(self):
-        user = User.objects.create_user(email='test@test.com', password='test_qwerty')
-        self.client.force_authenticate(user=user)
-        response = self.client.patch(f'/users/{user.pk}/', data=self.update_data)
+    def test_update_module(self):
+
+        update_data = {
+            "title": "test_update_title",
+            "description": "test_update_description"
+        }
+        module = Module.objects.create(title='test_title', description='test_description')
+
+        response = self.client.patch(
+            f'/module/{module.id}/',
+            data=update_data
+        )
         self.assertEqual(
             response.status_code,
             status.HTTP_200_OK
         )
-        updated_user = User.objects.get(pk=user.pk)
-        self.assertEquals(updated_user.email, user.email)
-        self.assertEquals(updated_user.first_name, self.update_data['first_name'])
-        self.assertEquals(updated_user.last_name, self.update_data['last_name'])
+        self.assertEqual(
+            response.json(),
+            {'id': module.id, 'title': 'test_update_title', 'description': 'test_update_description', 'author': None}
+        )
 
-    def test_destroy_user(self):
-        user = User.objects.create_user(email='test@test.com', password='test_qwerty', is_staff=True, is_superuser=True)
-        self.client.force_authenticate(user=user)
-        response = self.client.delete(f'/users/{user.pk}/')
+    def test_destroy_lesson(self):
+
+        module = Module.objects.create(title='test_title', description='test_description')
+
+        response = self.client.delete(
+            f'/module/{module.id}/',
+        )
         self.assertEqual(
             response.status_code,
             status.HTTP_204_NO_CONTENT
         )
 
-    def test_user_str(self):
-        user = User.objects.create_user(email='test@test.com', password='test_qwerty')
-        self.assertEquals(user.__str__(), 'test@test.com')
+    def tearDown(self):
+        Module.objects.all().delete()
+        User.objects.all().delete()
