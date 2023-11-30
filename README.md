@@ -6,6 +6,7 @@
 В папке config/ создать .env и заполнить его по образцу:
 ```commandline
 SECRET_KEY=
+DEBUG=1
 POSTGRES_DB=edu_modules
 POSTGRES_USER=
 POSTGRES_PASSWORD=
@@ -14,8 +15,6 @@ POSTGRES_HOST=db
 
 
 `docker-compose up -d --build` - создание образов и запуск контейнера в фоновом режиме
-
-`docker-compose exec web python manage.py migrate` - применение миграций
 
 `docker-compose stop` - остановка контейнера
 
